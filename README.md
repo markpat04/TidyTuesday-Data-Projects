@@ -50,5 +50,5 @@ This portfolio is actively maintained, with new projects added regularly as part
 Feel free to reach out for a deeper discussion on any of these projects or my data analysis methodology.
 
 * **[Pattarapol Vanitchayakitpaiboon]**
-* **[https://www.linkedin.com/in/pattarapol-vanitchayakitpaiboon/]**
+* **[[LinkedIn](https://www.linkedin.com/in/pattarapol-vanitchayakitpaiboon/)]**
 * **[mark254741@gmail.com]**
