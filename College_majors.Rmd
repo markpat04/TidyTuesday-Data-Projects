@@ -52,7 +52,7 @@ by_major_category <- Major_processed %>%
     arrange(desc(ShareWomen))
 ```
 
-## What categories of majors can make more money than others?
+### What categories of majors can make more money than others?
 
 ```{r}
 Major_processed %>%
@@ -97,7 +97,7 @@ Major_processed %>%
     coord_flip()
 ```
 
-## This is correlation not causation
+### This is correlation not causation
 
 ```{r}
 by_major_category %>%
@@ -109,7 +109,7 @@ by_major_category %>%
     expand_limits( y = 0)
 ```
 
-## Avoid from Simpson's paradox
+### Avoid from Simpson's paradox
 
 ```{r}
 g <- Major_processed %>% 
@@ -186,7 +186,7 @@ recent_grads %>%
     View()
 ```
 
-##Distribution means they make a lot of money or low sample sizes a lot of variations
+Distribution means they make a lot of money or low sample sizes a lot of variations
 
 ```{r}
 Major_processed %>% 
@@ -194,7 +194,7 @@ Major_processed %>%
     geom_histogram()
 ```
 
-## What major categories were most common
+What major categories were most common
 
 ```{r}
 by_major_category %>% 
@@ -209,7 +209,7 @@ by_major_category %>%
          y = " Total of graduates")
 ```
 
-## What  were the most common *majors* (since there were 173, we're not going to show them all)
+What were the most common *majors* (since there were 173, we're not going to show them all)
 
 ```{r}
 Major_processed %>% 
@@ -240,7 +240,7 @@ Major_processed %>%
 ```
 
 
-## What are the lowest earning majors?
+What are the lowest earning majors?
 
 ```{r}
 Major_processed %>% 
@@ -258,6 +258,7 @@ Major_processed %>%
          y = "Median salaty of graduates"
          )
 ```
+
 
 
 
