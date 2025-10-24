@@ -1,0 +1,316 @@
+---
+title: "College Majors & Income"
+author: "Pattarapol Vanitchayakitpaiboon"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## GitHub Documents
+
+This dataset from the [#tidytuesdayproject] (https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-10-16).
+
+
+## Including Code
+
+You can include R code in the document as follows:
+
+```{r College Major & Income }
+library(tidyverse)
+library(scales)
+library(ggrepel)
+library(plotly)
+library(broom)
+
+theme_set(theme_light())
+```
+
+### Import data and pre-processing
+
+```{r}
+recent_grads <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/refs/heads/master/college-majors/recent-grads.csv") 
+
+Major_processed <- recent_grads %>% 
+    arrange(desc(Median)) %>% 
+    mutate( Major = str_to_title(Major),
+            Major = fct_reorder(Major, Median))
+```
+
+### Aggregating by category
+
+```{r by_major_category}
+by_major_category <- Major_processed %>% 
+    filter( !is.na(Total)) %>% 
+    group_by(Major_category) %>% 
+    summarize( Men = sum(Men),
+                  Women = sum(Women),
+                  Total = sum(Total),
+                  MedianSalary = sum(Median * Sample_size / sum(Sample_size)) ) %>% 
+    mutate(ShareWomen = Women / Total) %>%
+    arrange(desc(ShareWomen))
+```
+
+## What categories of majors can make more money than others?
+
+```{r}
+Major_processed %>%
+    mutate(Major_category = fct_reorder(Major_category, Median)) %>% 
+    ggplot(aes(Major_category, Median, fill = Major_category)) +
+    geom_boxplot() +
+    scale_y_continuous(labels = dollar_format()) +
+    expand_limits( y = 0) +
+    coord_flip() +
+    theme(legend.position = "none")
+```
+
+### What are the highest earning majors?
+
+```{r}
+Major_processed %>% 
+    filter(Sample_size >= 100) %>% 
+    head(20) %>% 
+    ggplot(aes(Major, Median, color = Major_category)) +
+    geom_point() +
+    geom_errorbar(aes(ymin = P25th, ymax = P75th)) +
+    expand_limits(y = 0) +
+    scale_y_continuous(labels = dollar_format() ) +
+    coord_flip() +
+    labs(title = "What are the highest-earning majors?",
+         subtitle = "Top 20 majors with at least 100 graduates survayed. Bars represent the 25th to 75th percentile. ",
+         x = "",
+         y = "Median salaty of graduates"
+         )
+```
+
+### How does gender breakdown relate to typical earnings?
+
+```{r}
+Major_processed %>% 
+    arrange(desc(Total)) %>% 
+    head(20) %>% 
+    mutate( Major = fct_reorder(Major, Total)) %>% 
+    gather(Gender, Number, Men, Women) %>% 
+    ggplot(aes(Major, Number, fill = Gender)) +
+    geom_col() +
+    coord_flip()
+```
+
+## This is correlation not causation
+
+```{r}
+by_major_category %>%
+    mutate(Major_category = fct_lump(Major_category, 4)) %>% 
+    ggplot(aes(ShareWomen, MedianSalary)) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    geom_text_repel(aes(label = Major_category), force = .2) +
+    expand_limits( y = 0)
+```
+
+## Avoid from Simpson's paradox
+
+```{r}
+g <- Major_processed %>% 
+    mutate(Major_category = fct_lump(Major_category, 4)) %>% 
+    ggplot(aes(ShareWomen, Median, color = Major_category, size = Sample_size, label = Major)) +
+    geom_point() +
+    geom_smooth(aes(group = 1), method = "lm") +
+    scale_x_continuous(labels = percent_format()) +
+    scale_y_continuous(labels = dollar_format()) +
+    expand_limits( y = 0)
+
+ggplotly(g)
+```
+
+### Weigted linear regression
+## 0 --> 100% salary would go down ~23,650$ or every % points salary would decrease 236.5$ 
+
+```{r}
+Major_processed %>% 
+    select(Major, Total, ShareWomen, Sample_size, Median) %>% 
+    lm(Median ~ ShareWomen, data = ., weights = Sample_size) %>% 
+    summary()
+```
+
+## What is the correlation between sharewomen and average salary
+## What is the correlation between majors
+
+```{r}
+Major_processed %>% 
+    select(Major, Major_category, Total, ShareWomen, Sample_size, Median) %>%
+    add_count(Major_category) %>% 
+    filter(n >= 10) %>% 
+    nest(data = -Major_category) %>% 
+    mutate(model = map(data, ~ lm(Median ~ ShareWomen, data = ., weights = Sample_size)),
+           tidied = map(model, tidy)) %>% 
+    unnest(tidied)
+```
+
+### Interquartile ranges
+
+```{r}
+Major_processed %>% 
+    filter( Sample_size >= 100) %>% 
+    mutate( IQR = P75th - P25th) %>% 
+    arrange( desc(IQR))
+```
+
+### Futeure works
+- Examining unemployment rate and fraction taking a job requiring a collage degree
+- Examining interquartile ranges
+
+
+### Appendix
+bland altman plot
+
+```{r}
+Major_processed %>% 
+    ggplot(aes(Sample_size, Median)) +
+    geom_point() +
+    geom_text(aes(label = Major), check_overlap = TRUE, vjust = 1, hjust = 1) +
+    scale_x_log10()
+```
+
+
+```{r}
+knitr::knit_exit()
+```
+
+This is scrap section
+
+
+```{r}
+recent_grads %>% 
+    View()
+```
+
+##Distribution means they make a lot of money or low sample sizes a lot of variations
+
+```{r}
+Major_processed %>% 
+    ggplot(aes(Median)) +
+    geom_histogram()
+```
+
+## What major categories were most common
+
+```{r}
+by_major_category %>% 
+    mutate(Major_category = fct_reorder(Major_category, Total)) %>%
+    gather(Gender, Number, Men, Women) %>% 
+    ggplot(aes(Major_category, Number, fill = Gender)) +
+    geom_col() +
+    scale_y_continuous( labels = comma_format()) +
+    coord_flip() +
+    labs(title = "what are the most common major categories?",
+         x = "",
+         y = " Total of graduates")
+```
+
+## What  were the most common *majors* (since there were 173, we're not going to show them all)
+
+```{r}
+Major_processed %>% 
+
+    mutate(Major = fct_reorder(Major, Total)) %>%  ## Order by count
+    arrange(desc(Total)) %>% 
+    head(20) %>% 
+    ggplot(aes(Major, Total, fill = Major_category)) +
+    geom_col() +
+    coord_flip() +
+    scale_y_continuous(labels = comma_format()) +
+    labs(x = "",
+         y = " Total of graduates") +
+    theme(legend.position = "none")
+```
+
+
+
+```{r}
+Major_processed %>%
+    group_by(Major_category) %>% 
+    summarize(Median = median(Median)) %>% 
+    mutate(Major_category = fct_reorder(Major_category, Median)) %>% 
+    ggplot(aes(Major_category, Median)) +
+    geom_col() +
+    scale_y_continuous(labels = dollar_format()) +
+    coord_flip()
+```
+
+
+## What are the lowest earning majors?
+
+```{r}
+Major_processed %>% 
+    filter(Sample_size >= 100) %>% 
+    tail(20) %>% 
+    ggplot(aes(Major, Median, color = Major_category)) +
+    geom_point() +
+    geom_errorbar(aes(ymin = P25th, ymax = P75th)) +
+    expand_limits(y = 0) +
+    scale_y_continuous(labels = dollar_format()) +
+    coord_flip() +
+    labs(title = "What are the lowest-earning majors?",
+         subtitle = "Down 20 majors with at least 100 graduates survayed. Bars represent the 25th to 75th percentile. ",
+         x = "",
+         y = "Median salaty of graduates"
+         )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
