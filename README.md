@@ -24,7 +24,7 @@ The projects within this repository showcase expertise in the following areas:
 | Topic                  | Key Techniques Used                        | Link to Project                               |
 | :--------------------- | :----------------------------------------- | :-------------------------------------------- |
 | College_majors      | Weigted linear regression | [[View Analysis](https://github.com/markpat04/TidyTuesday-Data-Projects/blob/main/College_majors.Rmd)]                 |
-| Global Crop Yields     | Faceting, `ggplot2` theming, `forcats`     | [View Analysis](./2023_W48/)                  |
+| Water access points     | `countrycode`, `ggmap`, `gganimate`     | [View Analysis](https://github.com/markpat04/TidyTuesday-Data-Projects/blob/main/Water%20access%20points.Rmd)                  |
 
 
 ---
